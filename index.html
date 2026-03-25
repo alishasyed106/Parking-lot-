@@ -1,0 +1,1959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ParkGrid — Parking Lot Management System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #1a1a24;
+    --border: #2a2a3a;
+    --accent: #00e5ff;
+    --accent2: #7b61ff;
+    --accent3: #00ff9d;
+    --warn: #ff6b35;
+    --text: #e8e8f0;
+    --text-dim: #7a7a9a;
+    --text-bright: #ffffff;
+    --mono: 'DM Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+    --display: 'Syne', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    overflow-x: hidden;
+    line-height: 1.6;
+  }
+
+  /* NOISE OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.4;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.2rem 3rem;
+    background: rgba(10,10,15,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-logo {
+    font-family: var(--display);
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--text-bright);
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    text-decoration: none;
+  }
+
+  .nav-logo span {
+    color: var(--accent);
+  }
+
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: var(--accent);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--bg);
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 2.5rem;
+    list-style: none;
+  }
+
+  .nav-links a {
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    transition: color 0.2s;
+    font-family: var(--mono);
+  }
+
+  .nav-links a:hover { color: var(--accent); }
+
+  .nav-cta {
+    background: var(--accent);
+    color: var(--bg) !important;
+    padding: 0.5rem 1.2rem;
+    border-radius: 6px;
+    font-weight: 600 !important;
+    transition: opacity 0.2s !important;
+  }
+
+  .nav-cta:hover { opacity: 0.85; color: var(--bg) !important; }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8rem 2rem 4rem;
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+  }
+
+  .hero-glow {
+    position: absolute;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(0,229,255,0.12) 0%, transparent 70%);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    animation: pulseGlow 6s ease-in-out infinite;
+  }
+
+  .hero-glow2 {
+    position: absolute;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(123,97,255,0.1) 0%, transparent 70%);
+    top: 30%; left: 20%;
+    pointer-events: none;
+    animation: pulseGlow 8s ease-in-out infinite reverse;
+  }
+
+  @keyframes pulseGlow {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    50% { transform: translate(-50%, -50%) scale(1.15); opacity: 0.7; }
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(0,229,255,0.1);
+    border: 1px solid rgba(0,229,255,0.3);
+    border-radius: 100px;
+    padding: 0.4rem 1rem;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    margin-bottom: 2rem;
+    animation: fadeInDown 0.6s ease both;
+  }
+
+  .badge-dot {
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: blink 2s infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  @keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero h1 {
+    font-family: var(--display);
+    font-size: clamp(3rem, 7vw, 6.5rem);
+    font-weight: 800;
+    line-height: 1.0;
+    letter-spacing: -0.03em;
+    color: var(--text-bright);
+    margin-bottom: 1.5rem;
+    animation: fadeInUp 0.7s ease 0.1s both;
+  }
+
+  .hero h1 em {
+    font-style: normal;
+    color: var(--accent);
+    position: relative;
+  }
+
+  .hero-sub {
+    font-size: 1.1rem;
+    color: var(--text-dim);
+    max-width: 600px;
+    margin: 0 auto 2.5rem;
+    line-height: 1.8;
+    animation: fadeInUp 0.7s ease 0.2s both;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    animation: fadeInUp 0.7s ease 0.3s both;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    padding: 0.9rem 2rem;
+    border-radius: 8px;
+    font-family: var(--display);
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+    letter-spacing: 0.01em;
+  }
+
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,229,255,0.35); }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 0.9rem 2rem;
+    border-radius: 8px;
+    font-family: var(--display);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+  }
+
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-2px); }
+
+  /* TECH STACK PILLS */
+  .tech-pills {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 3rem;
+    animation: fadeInUp 0.7s ease 0.4s both;
+  }
+
+  .pill {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.4rem 0.9rem;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.2s;
+  }
+
+  .pill:hover { border-color: var(--accent); color: var(--accent); }
+
+  .pill-dot { width: 5px; height: 5px; border-radius: 50%; }
+
+  /* LIVE DEMO SECTION */
+  .section {
+    padding: 6rem 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--accent);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .section-label::before {
+    content: '//';
+    color: var(--text-dim);
+  }
+
+  .section-title {
+    font-family: var(--display);
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--text-bright);
+    margin-bottom: 1rem;
+    line-height: 1.1;
+  }
+
+  .section-desc {
+    color: var(--text-dim);
+    max-width: 560px;
+    font-size: 1rem;
+    line-height: 1.8;
+    margin-bottom: 3rem;
+  }
+
+  /* PARKING LOT SIMULATOR */
+  .simulator {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .sim-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.2rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  .sim-title {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text-bright);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .sim-title-icon {
+    width: 8px; height: 8px;
+    background: var(--accent3);
+    border-radius: 50%;
+    animation: blink 2s infinite;
+  }
+
+  .sim-controls {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .sim-btn {
+    padding: 0.4rem 0.9rem;
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-dim);
+    transition: all 0.15s;
+    letter-spacing: 0.02em;
+  }
+
+  .sim-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .sim-btn.active { background: var(--accent); border-color: var(--accent); color: var(--bg); font-weight: 700; }
+
+  .sim-body {
+    padding: 1.5rem;
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 1.5rem;
+  }
+
+  /* PARKING GRID */
+  .parking-grid-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .lot-label {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .parking-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .row-label {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    width: 20px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .parking-slot {
+    width: 52px;
+    height: 60px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface2);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    flex-shrink: 0;
+  }
+
+  .parking-slot.available {
+    border-color: rgba(0,255,157,0.3);
+    background: rgba(0,255,157,0.05);
+  }
+
+  .parking-slot.occupied {
+    border-color: rgba(255,107,53,0.4);
+    background: rgba(255,107,53,0.08);
+  }
+
+  .parking-slot.reserved {
+    border-color: rgba(0,229,255,0.4);
+    background: rgba(0,229,255,0.08);
+  }
+
+  .parking-slot.buffer {
+    border-color: rgba(123,97,255,0.4);
+    background: rgba(123,97,255,0.08);
+    border-style: dashed;
+  }
+
+  .parking-slot:hover { transform: scale(1.05); z-index: 2; }
+
+  .slot-icon { font-size: 1.2rem; line-height: 1; }
+  .slot-id { font-size: 0.55rem; color: var(--text-dim); margin-top: 2px; }
+
+  .parking-slot.available .slot-icon::after { content: '□'; }
+  .parking-slot.occupied .slot-icon { color: var(--warn); }
+  .parking-slot.reserved .slot-icon { color: var(--accent); }
+  .parking-slot.buffer .slot-icon { color: var(--accent2); }
+
+  /* LEGEND */
+  .legend {
+    display: flex;
+    gap: 1.2rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--text-dim);
+  }
+
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 3px;
+    border: 1.5px solid;
+  }
+
+  /* SIDE PANEL */
+  .sim-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .stat-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem;
+  }
+
+  .stat-value {
+    font-family: var(--display);
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--text-bright);
+    line-height: 1;
+    margin-bottom: 0.3rem;
+  }
+
+  .stat-label {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .stat-card.highlight { border-color: rgba(0,229,255,0.3); background: rgba(0,229,255,0.06); }
+  .stat-card.highlight .stat-value { color: var(--accent); }
+
+  /* LOG */
+  .event-log {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    flex: 1;
+  }
+
+  .log-header {
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .log-header::before { content: '▶'; color: var(--accent); }
+
+  .log-entries {
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .log-entry {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    padding: 0.35rem 0.5rem;
+    border-radius: 4px;
+    background: var(--surface);
+    border-left: 2px solid transparent;
+    animation: slideIn 0.3s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .log-entry.enter { border-color: var(--accent3); }
+  .log-entry.exit { border-color: var(--warn); }
+  .log-entry.notify { border-color: var(--accent); }
+  .log-entry.system { border-color: var(--accent2); }
+
+  .log-entry span { color: var(--accent); }
+
+  /* STRATEGY CONTROLS */
+  .strategy-panel {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem;
+  }
+
+  .strategy-title {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+
+  .strategy-btns {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .strat-btn {
+    padding: 0.6rem 0.8rem;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .strat-btn:hover { border-color: var(--accent); color: var(--text); }
+  .strat-btn.active { border-color: var(--accent); background: rgba(0,229,255,0.08); color: var(--accent); }
+
+  .strat-btn-icon { font-size: 0.85rem; }
+
+  /* ARCHITECTURE */
+  .arch-section {
+    padding: 6rem 2rem;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .arch-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .arch-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-top: 3rem;
+  }
+
+  .arch-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.25s;
+  }
+
+  .arch-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+
+  .arch-card.java::before { background: linear-gradient(90deg, #f89820, transparent); }
+  .arch-card.go::before { background: linear-gradient(90deg, #00acd7, transparent); }
+  .arch-card.spring::before { background: linear-gradient(90deg, #6db33f, transparent); }
+  .arch-card.pg::before { background: linear-gradient(90deg, #336791, transparent); }
+  .arch-card.pattern::before { background: linear-gradient(90deg, var(--accent), transparent); }
+  .arch-card.solid::before { background: linear-gradient(90deg, var(--accent2), transparent); }
+
+  .arch-card:hover { transform: translateY(-4px); border-color: rgba(0,229,255,0.2); }
+
+  .arch-icon {
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+  }
+
+  .arch-card-title {
+    font-family: var(--display);
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-bright);
+    margin-bottom: 0.5rem;
+  }
+
+  .arch-card-desc {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    line-height: 1.7;
+  }
+
+  .arch-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 1rem;
+  }
+
+  .arch-tag {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 4px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+  }
+
+  /* CODE SECTION */
+  .code-section {
+    padding: 6rem 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .code-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0;
+  }
+
+  .code-tab {
+    padding: 0.65rem 1.2rem;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    cursor: pointer;
+    border: 1px solid transparent;
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    transition: all 0.15s;
+    background: none;
+    margin-bottom: -1px;
+  }
+
+  .code-tab.active {
+    color: var(--accent);
+    border-color: var(--border);
+    background: var(--surface);
+  }
+
+  .code-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 12px 12px 12px;
+    overflow: hidden;
+  }
+
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.8rem 1.2rem;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .code-filename {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .copy-btn {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+  pre {
+    padding: 1.5rem;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    line-height: 1.7;
+    color: var(--text);
+    max-height: 420px;
+  }
+
+  .kw { color: #7b61ff; }
+  .cls { color: #00e5ff; }
+  .fn { color: #00ff9d; }
+  .str { color: #ff9d61; }
+  .cmt { color: #4a4a6a; font-style: italic; }
+  .num { color: #ff6b9d; }
+  .ann { color: #7b61ff; }
+
+  .code-pane { display: none; }
+  .code-pane.active { display: block; }
+
+  /* FEATURES */
+  .features-section {
+    padding: 6rem 2rem;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .features-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-top: 3rem;
+  }
+
+  .feature-card {
+    display: flex;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    transition: all 0.25s;
+  }
+
+  .feature-card:hover { border-color: rgba(0,229,255,0.25); transform: translateY(-2px); }
+
+  .feature-icon-wrap {
+    width: 48px; height: 48px;
+    flex-shrink: 0;
+    border-radius: 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+  }
+
+  .feature-content {}
+
+  .feature-title {
+    font-family: var(--display);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-bright);
+    margin-bottom: 0.4rem;
+  }
+
+  .feature-desc {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    line-height: 1.7;
+  }
+
+  /* OBSERVER FLOW DIAGRAM */
+  .observer-section {
+    padding: 6rem 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .flow-diagram {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-top: 2rem;
+    overflow-x: auto;
+  }
+
+  .flow-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .flow-node {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.2rem;
+    text-align: center;
+    min-width: 120px;
+  }
+
+  .flow-node-title {
+    font-family: var(--display);
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-bright);
+    margin-bottom: 0.25rem;
+  }
+
+  .flow-node-sub {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    color: var(--text-dim);
+  }
+
+  .flow-node.accent { border-color: rgba(0,229,255,0.4); background: rgba(0,229,255,0.07); }
+  .flow-node.accent .flow-node-title { color: var(--accent); }
+  .flow-node.accent2 { border-color: rgba(123,97,255,0.4); background: rgba(123,97,255,0.07); }
+  .flow-node.accent2 .flow-node-title { color: var(--accent2); }
+  .flow-node.green { border-color: rgba(0,255,157,0.4); background: rgba(0,255,157,0.07); }
+  .flow-node.green .flow-node-title { color: var(--accent3); }
+
+  .flow-arrow {
+    font-size: 1.2rem;
+    color: var(--text-dim);
+    padding: 0 0.75rem;
+    flex-shrink: 0;
+  }
+
+  .flow-section-gap {
+    width: 100%;
+    height: 1px;
+    background: var(--border);
+    margin: 1.5rem 0;
+    position: relative;
+  }
+
+  .flow-section-label {
+    position: absolute;
+    top: -0.55rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    color: var(--text-dim);
+    background: var(--surface);
+    padding: 0 0.75rem;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+  }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 3rem 2rem;
+    text-align: center;
+  }
+
+  .footer-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: gap;
+  }
+
+  .footer-logo {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: var(--text-bright);
+  }
+
+  .footer-logo span { color: var(--accent); }
+
+  .footer-links {
+    display: flex;
+    gap: 1.5rem;
+    list-style: none;
+    align-items: center;
+  }
+
+  .footer-links a {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .footer-links a:hover { color: var(--accent); }
+
+  .footer-copy {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+  }
+
+  /* SCROLL ANIMATIONS */
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* PROGRESS BAR */
+  .occupancy-bar {
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 100px;
+    overflow: hidden;
+    margin-top: 0.5rem;
+  }
+
+  .occupancy-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent3), var(--accent));
+    border-radius: 100px;
+    transition: width 0.5s ease;
+  }
+
+  /* NOTIFICATION TOAST */
+  .toast-container {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    pointer-events: none;
+  }
+
+  .toast {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    animation: toastIn 0.3s ease, toastOut 0.3s ease 3.7s both;
+    min-width: 280px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+  }
+
+  .toast.success { border-color: rgba(0,255,157,0.4); }
+  .toast.info { border-color: rgba(0,229,255,0.4); }
+  .toast.warn { border-color: rgba(255,107,53,0.4); }
+
+  .toast-icon { font-size: 1rem; }
+
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateX(30px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  @keyframes toastOut {
+    from { opacity: 1; transform: translateX(0); }
+    to { opacity: 0; transform: translateX(30px); }
+  }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--surface); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    nav { padding: 1rem 1.5rem; }
+    .nav-links { display: none; }
+    .sim-body { grid-template-columns: 1fr; }
+    .arch-grid { grid-template-columns: 1fr 1fr; }
+    .features-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 600px) {
+    .arch-grid { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 2.8rem; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <div class="logo-icon">P</div>
+    Park<span>Grid</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#demo">Demo</a></li>
+    <li><a href="#architecture">Stack</a></li>
+    <li><a href="#code">Code</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="https://github.com" target="_blank" class="nav-cta">GitHub ↗</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-glow2"></div>
+
+  <div class="hero-badge">
+    <span class="badge-dot"></span>
+    PARKING LOT MANAGEMENT SYSTEM
+  </div>
+
+  <h1>Smart Parking.<br>Built with <em>Precision.</em></h1>
+  <p class="hero-sub">
+    A dynamic parking management engine implementing <strong>Circular</strong> and <strong>Buffer</strong> allocation strategies. Real-time stakeholder notifications via the Observer pattern. SOLID principles. Production-grade architecture.
+  </p>
+
+  <div class="hero-actions">
+    <a href="#demo" class="btn-primary">▶ Live Demo</a>
+    <a href="https://github.com" target="_blank" class="btn-secondary">⌥ View on GitHub</a>
+  </div>
+
+  <div class="tech-pills">
+    <div class="pill"><span class="pill-dot" style="background:#f89820"></span>Java 17</div>
+    <div class="pill"><span class="pill-dot" style="background:#00acd7"></span>Golang</div>
+    <div class="pill"><span class="pill-dot" style="background:#6db33f"></span>Spring Boot</div>
+    <div class="pill"><span class="pill-dot" style="background:#336791"></span>PostgreSQL</div>
+    <div class="pill"><span class="pill-dot" style="background:var(--accent)"></span>Observer Pattern</div>
+    <div class="pill"><span class="pill-dot" style="background:var(--accent2)"></span>SOLID Principles</div>
+  </div>
+</section>
+
+<!-- DEMO SIMULATOR -->
+<section class="section" id="demo">
+  <div class="reveal">
+    <div class="section-label">Interactive Demo</div>
+    <h2 class="section-title">Live Parking Simulator</h2>
+    <p class="section-desc">Park and release vehicles, switch allocation strategies, and watch the Observer pattern notify stakeholders in real time.</p>
+
+    <div class="simulator">
+      <div class="sim-header">
+        <div class="sim-title">
+          <span class="sim-title-icon"></span>
+          ParkGrid Engine — Floor A
+        </div>
+        <div class="sim-controls">
+          <button class="sim-btn active" id="btn-circular" onclick="setStrategy('circular')">⟳ Circular</button>
+          <button class="sim-btn" id="btn-buffer" onclick="setStrategy('buffer')">⊞ Buffer</button>
+          <button class="sim-btn" onclick="parkVehicle()">+ Park Vehicle</button>
+          <button class="sim-btn" onclick="releaseVehicle()">↑ Release</button>
+          <button class="sim-btn" onclick="resetLot()">↺ Reset</button>
+        </div>
+      </div>
+
+      <div class="sim-body">
+        <!-- GRID -->
+        <div class="parking-grid-wrap">
+          <div class="lot-label">FLOOR A — 24 SLOTS — <span id="strat-label">CIRCULAR ALLOCATION</span></div>
+          <div id="parking-grid"></div>
+          <div class="legend">
+            <div class="legend-item"><div class="legend-dot" style="border-color:rgba(0,255,157,0.5);background:rgba(0,255,157,0.1)"></div>Available</div>
+            <div class="legend-item"><div class="legend-dot" style="border-color:rgba(255,107,53,0.5);background:rgba(255,107,53,0.1)"></div>Occupied</div>
+            <div class="legend-item"><div class="legend-dot" style="border-color:rgba(0,229,255,0.5);background:rgba(0,229,255,0.1)"></div>Reserved</div>
+            <div class="legend-item"><div class="legend-dot" style="border-color:rgba(123,97,255,0.5);background:rgba(123,97,255,0.1)"></div>Buffer</div>
+          </div>
+        </div>
+
+        <!-- SIDE PANEL -->
+        <div class="sim-panel">
+          <div class="stats-grid">
+            <div class="stat-card highlight">
+              <div class="stat-value" id="stat-available">20</div>
+              <div class="stat-label">Available</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="stat-occupied" style="color:var(--warn)">4</div>
+              <div class="stat-label">Occupied</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="stat-reserved" style="color:var(--accent)">2</div>
+              <div class="stat-label">Reserved</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="stat-buffer" style="color:var(--accent2)">4</div>
+              <div class="stat-label">Buffer</div>
+            </div>
+          </div>
+
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:1rem;">
+            <div style="font-family:var(--mono);font-size:0.65rem;color:var(--text-dim);margin-bottom:0.5rem;text-transform:uppercase;letter-spacing:0.1em">Occupancy Rate</div>
+            <div style="font-family:var(--display);font-size:1.5rem;font-weight:800;color:var(--text-bright)" id="stat-pct">17%</div>
+            <div class="occupancy-bar"><div class="occupancy-fill" id="occ-bar" style="width:17%"></div></div>
+          </div>
+
+          <!-- Strategy -->
+          <div class="strategy-panel">
+            <div class="strategy-title">Allocation Strategy</div>
+            <div class="strategy-btns">
+              <button class="strat-btn active" id="strat-circular-btn" onclick="setStrategy('circular')">
+                <span class="strat-btn-icon">⟳</span>
+                Circular Allocation
+              </button>
+              <button class="strat-btn" id="strat-buffer-btn" onclick="setStrategy('buffer')">
+                <span class="strat-btn-icon">⊞</span>
+                Buffer Allocation
+              </button>
+            </div>
+          </div>
+
+          <!-- Log -->
+          <div class="event-log">
+            <div class="log-header">OBSERVER EVENT LOG</div>
+            <div class="log-entries" id="log-entries"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ARCHITECTURE -->
+<section class="arch-section" id="architecture">
+  <div class="arch-inner">
+    <div class="reveal">
+      <div class="section-label">System Architecture</div>
+      <h2 class="section-title">Tech Stack & Design</h2>
+      <p class="section-desc">A polyglot architecture engineered for scalability, testability, and real-world deployment.</p>
+    </div>
+
+    <div class="arch-grid reveal">
+      <div class="arch-card java">
+        <div class="arch-icon">☕</div>
+        <div class="arch-card-title">Java 17</div>
+        <div class="arch-card-desc">Core domain model, allocation strategies, and design pattern implementations. Leverages sealed interfaces and records for expressive, safe code.</div>
+        <div class="arch-tags">
+          <span class="arch-tag">Domain Logic</span>
+          <span class="arch-tag">Sealed Classes</span>
+          <span class="arch-tag">Records</span>
+          <span class="arch-tag">Generics</span>
+        </div>
+      </div>
+
+      <div class="arch-card go">
+        <div class="arch-icon">🐹</div>
+        <div class="arch-card-title">Golang</div>
+        <div class="arch-card-desc">High-throughput notification service and API gateway. Goroutines handle concurrent slot updates and WebSocket broadcasts to subscribed clients.</div>
+        <div class="arch-tags">
+          <span class="arch-tag">Goroutines</span>
+          <span class="arch-tag">Channels</span>
+          <span class="arch-tag">WebSocket</span>
+          <span class="arch-tag">gRPC</span>
+        </div>
+      </div>
+
+      <div class="arch-card spring">
+        <div class="arch-icon">🌱</div>
+        <div class="arch-card-title">Spring Boot</div>
+        <div class="arch-card-desc">RESTful API layer with dependency injection, security filters, and transaction management. OpenAPI docs auto-generated for all endpoints.</div>
+        <div class="arch-tags">
+          <span class="arch-tag">REST API</span>
+          <span class="arch-tag">JPA</span>
+          <span class="arch-tag">Security</span>
+          <span class="arch-tag">OpenAPI</span>
+        </div>
+      </div>
+
+      <div class="arch-card pg">
+        <div class="arch-icon">🐘</div>
+        <div class="arch-card-title">PostgreSQL</div>
+        <div class="arch-card-desc">Persistent store for slot state, booking history, and vehicle registry. Optimistic locking prevents double-allocation under concurrent load.</div>
+        <div class="arch-tags">
+          <span class="arch-tag">Transactions</span>
+          <span class="arch-tag">Indexes</span>
+          <span class="arch-tag">Migrations</span>
+          <span class="arch-tag">Flyway</span>
+        </div>
+      </div>
+
+      <div class="arch-card pattern">
+        <div class="arch-icon">👁️</div>
+        <div class="arch-card-title">Observer Pattern</div>
+        <div class="arch-card-desc">ParkingLot acts as Subject. Operators, dashboards, and mobile apps subscribe as Observers and receive push updates on every state change.</div>
+        <div class="arch-tags">
+          <span class="arch-tag">Subject</span>
+          <span class="arch-tag">Observer</span>
+          <span class="arch-tag">Push Events</span>
+          <span class="arch-tag">Decoupled</span>
+        </div>
+      </div>
+
+      <div class="arch-card solid">
+        <div class="arch-icon">🧱</div>
+        <div class="arch-card-title">SOLID Principles</div>
+        <div class="arch-card-desc">Every class has one reason to change. Allocation strategies are plug-in via interface. Abstractions own dependencies — never concrete implementations.</div>
+        <div class="arch-tags">
+          <span class="arch-tag">SRP</span>
+          <span class="arch-tag">OCP</span>
+          <span class="arch-tag">LSP</span>
+          <span class="arch-tag">ISP</span>
+          <span class="arch-tag">DIP</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- OBSERVER DIAGRAM -->
+<section class="observer-section" id="observer">
+  <div class="reveal">
+    <div class="section-label">Design Pattern</div>
+    <h2 class="section-title">Observer Pattern Flow</h2>
+    <p class="section-desc">When a slot changes state, the ParkingLot Subject notifies all registered Observers without tight coupling.</p>
+
+    <div class="flow-diagram">
+      <div class="flow-row">
+        <div class="flow-node">
+          <div class="flow-node-title">Vehicle Arrives</div>
+          <div class="flow-node-sub">Trigger Event</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node accent">
+          <div class="flow-node-title">ParkingLot</div>
+          <div class="flow-node-sub">Subject (Observable)</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node">
+          <div class="flow-node-title">Allocation Strategy</div>
+          <div class="flow-node-sub">Circular / Buffer</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node green">
+          <div class="flow-node-title">Slot Assigned</div>
+          <div class="flow-node-sub">State Changed</div>
+        </div>
+      </div>
+
+      <div class="flow-section-gap"><span class="flow-section-label">notifyObservers(slotEvent)</span></div>
+
+      <div class="flow-row" style="gap:1.5rem">
+        <div class="flow-node accent2">
+          <div class="flow-node-title">Dashboard</div>
+          <div class="flow-node-sub">Observer #1</div>
+        </div>
+        <div class="flow-node accent2">
+          <div class="flow-node-title">Operator SMS</div>
+          <div class="flow-node-sub">Observer #2</div>
+        </div>
+        <div class="flow-node accent2">
+          <div class="flow-node-title">Mobile App</div>
+          <div class="flow-node-sub">Observer #3</div>
+        </div>
+        <div class="flow-node accent2">
+          <div class="flow-node-title">Billing Service</div>
+          <div class="flow-node-sub">Observer #4</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CODE TABS -->
+<section class="code-section" id="code">
+  <div class="reveal">
+    <div class="section-label">Source Code</div>
+    <h2 class="section-title">Key Implementations</h2>
+    <p class="section-desc">Selected snippets from the core system demonstrating SOLID design and pattern application.</p>
+
+    <div class="code-tabs" id="code-tabs">
+      <button class="code-tab active" onclick="switchTab('java-observer')">ParkingLot.java</button>
+      <button class="code-tab" onclick="switchTab('java-strategy')">AllocationStrategy.java</button>
+      <button class="code-tab" onclick="switchTab('golang')">notifier.go</button>
+      <button class="code-tab" onclick="switchTab('spring')">ParkingController.java</button>
+      <button class="code-tab" onclick="switchTab('sql')">schema.sql</button>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-filename" id="code-filename">📄 ParkingLot.java — Observer Subject</span>
+        <button class="copy-btn" onclick="copyCode()">Copy</button>
+      </div>
+
+      <!-- JAVA OBSERVER -->
+      <div class="code-pane active" id="pane-java-observer">
+<pre><span class="cmt">// Subject (Observable) — notifies observers on slot state changes</span>
+<span class="ann">@Component</span>
+<span class="kw">public class</span> <span class="cls">ParkingLot</span> <span class="kw">implements</span> <span class="cls">SlotSubject</span> {
+
+    <span class="kw">private final</span> <span class="cls">List</span>&lt;<span class="cls">ParkingSlot</span>&gt; slots;
+    <span class="kw">private final</span> <span class="cls">List</span>&lt;<span class="cls">SlotObserver</span>&gt; observers = <span class="kw">new</span> <span class="cls">ArrayList</span>&lt;&gt;();
+    <span class="kw">private</span> <span class="cls">AllocationStrategy</span> strategy;
+
+    <span class="kw">public</span> <span class="cls">ParkingLot</span>(<span class="cls">List</span>&lt;<span class="cls">ParkingSlot</span>&gt; slots,
+                       <span class="cls">AllocationStrategy</span> strategy) {
+        <span class="kw">this</span>.slots = slots;
+        <span class="kw">this</span>.strategy = strategy;
+    }
+
+    <span class="ann">@Override</span>
+    <span class="kw">public void</span> <span class="fn">registerObserver</span>(<span class="cls">SlotObserver</span> observer) {
+        observers.add(observer);
+    }
+
+    <span class="ann">@Override</span>
+    <span class="kw">public void</span> <span class="fn">notifyObservers</span>(<span class="cls">SlotEvent</span> event) {
+        observers.forEach(o -&gt; o.<span class="fn">update</span>(event));
+    }
+
+    <span class="kw">public</span> <span class="cls">Optional</span>&lt;<span class="cls">ParkingSlot</span>&gt; <span class="fn">parkVehicle</span>(<span class="cls">Vehicle</span> vehicle) {
+        <span class="kw">return</span> strategy
+            .<span class="fn">allocate</span>(slots, vehicle)
+            .map(slot -&gt; {
+                slot.<span class="fn">assign</span>(vehicle);
+                <span class="fn">notifyObservers</span>(<span class="cls">SlotEvent</span>.<span class="fn">occupied</span>(slot, vehicle));
+                <span class="kw">return</span> slot;
+            });
+    }
+
+    <span class="kw">public void</span> <span class="fn">releaseSlot</span>(<span class="cls">String</span> slotId) {
+        slots.stream()
+             .filter(s -&gt; s.<span class="fn">getId</span>().equals(slotId))
+             .findFirst()
+             .ifPresent(slot -&gt; {
+                 slot.<span class="fn">release</span>();
+                 <span class="fn">notifyObservers</span>(<span class="cls">SlotEvent</span>.<span class="fn">available</span>(slot));
+             });
+    }
+}</pre>
+      </div>
+
+      <!-- JAVA STRATEGY -->
+      <div class="code-pane" id="pane-java-strategy">
+<pre><span class="cmt">// Open/Closed Principle — add strategies without modifying core</span>
+<span class="kw">public interface</span> <span class="cls">AllocationStrategy</span> {
+    <span class="cls">Optional</span>&lt;<span class="cls">ParkingSlot</span>&gt; <span class="fn">allocate</span>(<span class="cls">List</span>&lt;<span class="cls">ParkingSlot</span>&gt; slots,
+                                      <span class="cls">Vehicle</span> vehicle);
+}
+
+<span class="cmt">// Circular Strategy — wraps around, evenly distributes wear</span>
+<span class="ann">@Component</span>
+<span class="kw">public class</span> <span class="cls">CircularAllocationStrategy</span> <span class="kw">implements</span> <span class="cls">AllocationStrategy</span> {
+
+    <span class="kw">private</span> <span class="kw">int</span> pointer = <span class="num">0</span>;
+
+    <span class="ann">@Override</span>
+    <span class="kw">public</span> <span class="cls">Optional</span>&lt;<span class="cls">ParkingSlot</span>&gt; <span class="fn">allocate</span>(<span class="cls">List</span>&lt;<span class="cls">ParkingSlot</span>&gt; slots,
+                                              <span class="cls">Vehicle</span> vehicle) {
+        <span class="kw">int</span> n = slots.size(), checked = <span class="num">0</span>;
+        <span class="kw">while</span> (checked++ &lt; n) {
+            <span class="cls">ParkingSlot</span> slot = slots.get(pointer % n);
+            pointer = (pointer + <span class="num">1</span>) % n;
+            <span class="kw">if</span> (slot.<span class="fn">isAvailable</span>()) <span class="kw">return</span> <span class="cls">Optional</span>.<span class="fn">of</span>(slot);
+        }
+        <span class="kw">return</span> <span class="cls">Optional</span>.empty();
+    }
+}
+
+<span class="cmt">// Buffer Strategy — reserves N slots as emergency buffer</span>
+<span class="ann">@Component</span>
+<span class="kw">public class</span> <span class="cls">BufferAllocationStrategy</span> <span class="kw">implements</span> <span class="cls">AllocationStrategy</span> {
+
+    <span class="kw">private final int</span> bufferSize;
+
+    <span class="kw">public</span> <span class="cls">BufferAllocationStrategy</span>(<span class="ann">@Value</span>(<span class="str">"${parking.buffer.size:4}"</span>) <span class="kw">int</span> bufferSize) {
+        <span class="kw">this</span>.bufferSize = bufferSize;
+    }
+
+    <span class="ann">@Override</span>
+    <span class="kw">public</span> <span class="cls">Optional</span>&lt;<span class="cls">ParkingSlot</span>&gt; <span class="fn">allocate</span>(<span class="cls">List</span>&lt;<span class="cls">ParkingSlot</span>&gt; slots,
+                                              <span class="cls">Vehicle</span> vehicle) {
+        <span class="cls">List</span>&lt;<span class="cls">ParkingSlot</span>&gt; available = slots.stream()
+            .filter(<span class="cls">ParkingSlot</span>::isAvailable)
+            .filter(s -&gt; !s.<span class="fn">isBuffer</span>())
+            .toList();
+
+        <span class="kw">if</span> (available.size() &lt;= bufferSize &amp;&amp; !vehicle.<span class="fn">isEmergency</span>())
+            <span class="kw">return</span> <span class="cls">Optional</span>.empty();
+
+        <span class="kw">return</span> available.stream().<span class="fn">findFirst</span>();
+    }
+}</pre>
+      </div>
+
+      <!-- GOLANG -->
+      <div class="code-pane" id="pane-golang">
+<pre><span class="cmt">// notifier.go — concurrent notification dispatcher via goroutines</span>
+<span class="kw">package</span> notifier
+
+<span class="kw">import</span> (
+    <span class="str">"context"</span>
+    <span class="str">"log/slog"</span>
+    <span class="str">"sync"</span>
+    <span class="str">"time"</span>
+)
+
+<span class="kw">type</span> <span class="cls">SlotEvent</span> <span class="kw">struct</span> {
+    SlotID    <span class="kw">string</span>
+    Status    <span class="kw">string</span>
+    VehicleID <span class="kw">string</span>
+    Timestamp time.Time
+}
+
+<span class="kw">type</span> <span class="cls">Observer</span> <span class="kw">interface</span> {
+    <span class="fn">Notify</span>(ctx context.Context, event <span class="cls">SlotEvent</span>) error
+}
+
+<span class="kw">type</span> <span class="cls">NotifierHub</span> <span class="kw">struct</span> {
+    mu        sync.RWMutex
+    observers []<span class="cls">Observer</span>
+    events    <span class="kw">chan</span> <span class="cls">SlotEvent</span>
+}
+
+<span class="kw">func</span> <span class="fn">NewNotifierHub</span>() *<span class="cls">NotifierHub</span> {
+    h := &amp;<span class="cls">NotifierHub</span>{events: <span class="kw">make</span>(<span class="kw">chan</span> <span class="cls">SlotEvent</span>, <span class="num">256</span>)}
+    <span class="kw">go</span> h.<span class="fn">dispatch</span>()
+    <span class="kw">return</span> h
+}
+
+<span class="kw">func</span> (h *<span class="cls">NotifierHub</span>) <span class="fn">dispatch</span>() {
+    <span class="kw">for</span> event := <span class="kw">range</span> h.events {
+        h.mu.<span class="fn">RLock</span>()
+        obs := h.observers
+        h.mu.<span class="fn">RUnlock</span>()
+
+        <span class="kw">var</span> wg sync.WaitGroup
+        <span class="kw">for</span> _, o := <span class="kw">range</span> obs {
+            wg.<span class="fn">Add</span>(<span class="num">1</span>)
+            <span class="kw">go func</span>(observer <span class="cls">Observer</span>) {
+                <span class="kw">defer</span> wg.<span class="fn">Done</span>()
+                ctx, cancel := context.<span class="fn">WithTimeout</span>(
+                    context.<span class="fn">Background</span>(), <span class="num">5</span>*time.Second)
+                <span class="kw">defer</span> <span class="fn">cancel</span>()
+                <span class="kw">if</span> err := observer.<span class="fn">Notify</span>(ctx, event); err != <span class="kw">nil</span> {
+                    slog.<span class="fn">Error</span>(<span class="str">"observer failed"</span>, <span class="str">"err"</span>, err)
+                }
+            }(o)
+        }
+        wg.<span class="fn">Wait</span>()
+    }
+}</pre>
+      </div>
+
+      <!-- SPRING -->
+      <div class="code-pane" id="pane-spring">
+<pre><span class="cmt">// RESTful controller — Spring Boot 3, SOLID-compliant</span>
+<span class="ann">@RestController</span>
+<span class="ann">@RequestMapping</span>(<span class="str">"/api/v1/parking"</span>)
+<span class="ann">@RequiredArgsConstructor</span>
+<span class="ann">@Slf4j</span>
+<span class="kw">public class</span> <span class="cls">ParkingController</span> {
+
+    <span class="kw">private final</span> <span class="cls">ParkingService</span> parkingService;
+
+    <span class="ann">@PostMapping</span>(<span class="str">"/park"</span>)
+    <span class="ann">@ResponseStatus</span>(<span class="cls">HttpStatus</span>.CREATED)
+    <span class="kw">public</span> <span class="cls">ResponseEntity</span>&lt;<span class="cls">ParkingResponse</span>&gt; <span class="fn">parkVehicle</span>(
+            <span class="ann">@RequestBody</span> <span class="ann">@Valid</span> <span class="cls">ParkingRequest</span> request) {
+
+        <span class="kw">return</span> parkingService
+            .<span class="fn">parkVehicle</span>(request)
+            .map(slot -&gt; <span class="cls">ResponseEntity</span>
+                .<span class="fn">status</span>(<span class="cls">HttpStatus</span>.CREATED)
+                .body(<span class="cls">ParkingResponse</span>.<span class="fn">from</span>(slot)))
+            .orElseThrow(() -&gt; <span class="kw">new</span> <span class="cls">LotFullException</span>(
+                <span class="str">"No available slots matching strategy"</span>));
+    }
+
+    <span class="ann">@DeleteMapping</span>(<span class="str">"/release/{slotId}"</span>)
+    <span class="kw">public</span> <span class="cls">ResponseEntity</span>&lt;<span class="cls">Void</span>&gt; <span class="fn">releaseSlot</span>(
+            <span class="ann">@PathVariable</span> <span class="cls">String</span> slotId) {
+        parkingService.<span class="fn">releaseSlot</span>(slotId);
+        <span class="kw">return</span> <span class="cls">ResponseEntity</span>.<span class="fn">noContent</span>().<span class="fn">build</span>();
+    }
+
+    <span class="ann">@GetMapping</span>(<span class="str">"/status"</span>)
+    <span class="kw">public</span> <span class="cls">LotStatusResponse</span> <span class="fn">getLotStatus</span>() {
+        <span class="kw">return</span> parkingService.<span class="fn">getLotStatus</span>();
+    }
+
+    <span class="ann">@GetMapping</span>(<span class="str">"/slots"</span>)
+    <span class="kw">public</span> <span class="cls">Page</span>&lt;<span class="cls">SlotDTO</span>&gt; <span class="fn">getSlots</span>(<span class="cls">Pageable</span> pageable,
+            <span class="ann">@RequestParam</span>(<span class="fn">required</span> = <span class="kw">false</span>) <span class="cls">SlotStatus</span> status) {
+        <span class="kw">return</span> parkingService.<span class="fn">findSlots</span>(status, pageable);
+    }
+}</pre>
+      </div>
+
+      <!-- SQL -->
+      <div class="code-pane" id="pane-sql">
+<pre><span class="cmt">-- Flyway migration V1__init_parking_schema.sql</span>
+
+<span class="kw">CREATE TABLE</span> <span class="cls">parking_lots</span> (
+    id          UUID        <span class="kw">PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+    name        VARCHAR(<span class="num">100</span>) <span class="kw">NOT NULL</span>,
+    strategy    VARCHAR(<span class="num">20</span>)  <span class="kw">NOT NULL CHECK</span> (strategy <span class="kw">IN</span> (<span class="str">'CIRCULAR'</span>, <span class="str">'BUFFER'</span>)),
+    created_at  TIMESTAMPTZ <span class="kw">NOT NULL DEFAULT</span> now()
+);
+
+<span class="kw">CREATE TABLE</span> <span class="cls">parking_slots</span> (
+    id          UUID        <span class="kw">PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+    lot_id      UUID        <span class="kw">NOT NULL REFERENCES</span> parking_lots(id),
+    slot_code   VARCHAR(<span class="num">10</span>)  <span class="kw">NOT NULL</span>,
+    floor       SMALLINT    <span class="kw">NOT NULL DEFAULT</span> <span class="num">1</span>,
+    status      VARCHAR(<span class="num">20</span>)  <span class="kw">NOT NULL DEFAULT</span> <span class="str">'AVAILABLE'</span>,
+    is_buffer   BOOLEAN     <span class="kw">NOT NULL DEFAULT FALSE</span>,
+    version     BIGINT      <span class="kw">NOT NULL DEFAULT</span> <span class="num">0</span>,  <span class="cmt">-- optimistic lock</span>
+    <span class="kw">UNIQUE</span> (lot_id, slot_code)
+);
+
+<span class="kw">CREATE TABLE</span> <span class="cls">bookings</span> (
+    id          UUID        <span class="kw">PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+    slot_id     UUID        <span class="kw">NOT NULL REFERENCES</span> parking_slots(id),
+    vehicle_id  VARCHAR(<span class="num">30</span>)  <span class="kw">NOT NULL</span>,
+    is_emergency BOOLEAN    <span class="kw">NOT NULL DEFAULT FALSE</span>,
+    parked_at   TIMESTAMPTZ <span class="kw">NOT NULL DEFAULT</span> now(),
+    released_at TIMESTAMPTZ
+);
+
+<span class="kw">CREATE INDEX</span> idx_slots_lot_status <span class="kw">ON</span> parking_slots (lot_id, status);
+<span class="kw">CREATE INDEX</span> idx_bookings_vehicle <span class="kw">ON</span> bookings (vehicle_id);
+<span class="kw">CREATE INDEX</span> idx_bookings_active  <span class="kw">ON</span> bookings (slot_id) <span class="kw">WHERE</span> released_at <span class="kw">IS NULL</span>;</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features-section" id="features">
+  <div class="features-inner">
+    <div class="reveal">
+      <div class="section-label">Features</div>
+      <h2 class="section-title">What's Under the Hood</h2>
+    </div>
+
+    <div class="features-grid reveal">
+      <div class="feature-card">
+        <div class="feature-icon-wrap">⟳</div>
+        <div class="feature-content">
+          <div class="feature-title">Circular Allocation</div>
+          <div class="feature-desc">Slot assignment wraps around the lot using a circular pointer, evenly distributing vehicle throughput and minimizing wear concentration on any single zone.</div>
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon-wrap">⊞</div>
+        <div class="feature-content">
+          <div class="feature-title">Buffer Allocation</div>
+          <div class="feature-desc">Configurable emergency buffer reserves N slots exclusively for high-priority vehicles. Regular traffic is blocked from buffer slots when occupancy is critical.</div>
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon-wrap">👁️</div>
+        <div class="feature-content">
+          <div class="feature-title">Real-Time Observer Notifications</div>
+          <div class="feature-desc">Dashboard, SMS operator, mobile app, and billing service all subscribe independently. Adding new observers requires zero changes to the ParkingLot core.</div>
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon-wrap">🧱</div>
+        <div class="feature-content">
+          <div class="feature-title">SOLID Architecture</div>
+          <div class="feature-desc">Single Responsibility on every class. Open/Closed for new strategies. Liskov-safe slot types. Interface Segregation on observer roles. Dependency Inversion throughout.</div>
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon-wrap">⚡</div>
+        <div class="feature-content">
+          <div class="feature-title">Concurrent Notification Dispatch</div>
+          <div class="feature-desc">The Golang service dispatches notifications to all observers concurrently via goroutines with per-observer timeout contexts, ensuring one slow observer never blocks others.</div>
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon-wrap">🔒</div>
+        <div class="feature-content">
+          <div class="feature-title">Optimistic Locking</div>
+          <div class="feature-desc">Version columns in PostgreSQL prevent double-allocation races under concurrent load. Conflicting writes trigger retries via Spring's @Retryable, not slot corruption.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;max-width:1200px;margin:0 auto">
+    <div class="footer-logo">Park<span>Grid</span></div>
+    <ul class="footer-links">
+      <li><a href="https://github.com" target="_blank">GitHub</a></li>
+      <li><a href="#demo">Demo</a></li>
+      <li><a href="#architecture">Architecture</a></li>
+      <li><a href="#code">Code</a></li>
+    </ul>
+  </div>
+  <div class="footer-copy">Built with Java, Golang, Spring Boot & PostgreSQL — Observer Pattern · SOLID Principles</div>
+</footer>
+
+<!-- TOASTS -->
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+// ===================== PARKING LOT SIMULATOR =====================
+const TOTAL_SLOTS = 24;
+const BUFFER_SLOTS = [20, 21, 22, 23]; // last 4
+const vehicles = ['🚗','🚕','🚙','🚌','🚎','🏎️','🚐','🚑'];
+
+let slots = [];
+let strategy = 'circular';
+let circularPointer = 0;
+let logEntries = [];
+
+function initLot() {
+  slots = [];
+  for (let i = 0; i < TOTAL_SLOTS; i++) {
+    slots.push({
+      id: `A${String(i+1).padStart(2,'0')}`,
+      status: BUFFER_SLOTS.includes(i) ? 'buffer' : 'available',
+      vehicle: null,
+      isBuffer: BUFFER_SLOTS.includes(i)
+    });
+  }
+  // Pre-populate a few
+  [2, 5, 10, 14].forEach(i => {
+    slots[i].status = 'occupied';
+    slots[i].vehicle = vehicles[Math.floor(Math.random()*vehicles.length)];
+  });
+  slots[7].status = 'reserved';
+  slots[18].status = 'reserved';
+  circularPointer = 0;
+  renderGrid();
+  updateStats();
+  addLog('system', `ParkingLot initialized — <span>${strategy.toUpperCase()}</span> strategy active`);
+}
+
+function renderGrid() {
+  const grid = document.getElementById('parking-grid');
+  grid.innerHTML = '';
+  const rows = 4, cols = 6;
+  for (let r = 0; r < rows; r++) {
+    const row = document.createElement('div');
+    row.className = 'parking-row';
+    const label = document.createElement('div');
+    label.className = 'row-label';
+    label.textContent = String.fromCharCode(65 + r);
+    row.appendChild(label);
+    for (let c = 0; c < cols; c++) {
+      const idx = r * cols + c;
+      const s = slots[idx];
+      const el = document.createElement('div');
+      el.className = `parking-slot ${s.isBuffer && s.status === 'buffer' ? 'buffer' : s.status}`;
+      el.innerHTML = `<span class="slot-icon">${s.status === 'occupied' ? s.vehicle : s.status === 'reserved' ? '🔷' : s.isBuffer ? '🟣' : ''}</span><span class="slot-id">${s.id}</span>`;
+      el.title = `Slot ${s.id} — ${s.status}`;
+      el.onclick = () => toggleSlot(idx);
+      row.appendChild(el);
+    }
+    grid.appendChild(row);
+  }
+}
+
+function toggleSlot(idx) {
+  const s = slots[idx];
+  if (s.status === 'occupied') {
+    s.status = s.isBuffer ? 'buffer' : 'available';
+    const v = s.vehicle;
+    s.vehicle = null;
+    addLog('exit', `<span>${s.id}</span> released — ${v} departed`);
+    showToast('warn', '🚗', `Slot ${s.id} released`);
+    notifyObservers('AVAILABLE', s.id);
+  } else if (s.status === 'available') {
+    const v = vehicles[Math.floor(Math.random()*vehicles.length)];
+    s.status = 'occupied';
+    s.vehicle = v;
+    addLog('enter', `<span>${s.id}</span> occupied — ${v} parked`);
+    showToast('success', v, `${v} parked at ${s.id}`);
+    notifyObservers('OCCUPIED', s.id);
+  }
+  renderGrid();
+  updateStats();
+}
+
+function parkVehicle() {
+  let idx = -1;
+  if (strategy === 'circular') {
+    let checked = 0;
+    while (checked < TOTAL_SLOTS) {
+      const i = circularPointer % TOTAL_SLOTS;
+      circularPointer = (circularPointer + 1) % TOTAL_SLOTS;
+      checked++;
+      if (slots[i].status === 'available') { idx = i; break; }
+    }
+  } else {
+    const available = slots.filter(s => s.status === 'available' && !s.isBuffer);
+    if (available.length > 4) {
+      const s = available.find((_, i) => i === 0);
+      idx = slots.indexOf(s);
+    }
+  }
+  if (idx >= 0) {
+    const v = vehicles[Math.floor(Math.random()*vehicles.length)];
+    slots[idx].status = 'occupied';
+    slots[idx].vehicle = v;
+    addLog('enter', `<span>${slots[idx].id}</span> occupied via <span>${strategy}</span> — ${v} parked`);
+    showToast('success', v, `${v} → ${slots[idx].id} [${strategy}]`);
+    notifyObservers('OCCUPIED', slots[idx].id);
+    renderGrid();
+    updateStats();
+  } else {
+    addLog('system', `Allocation failed — lot full or buffer reserved`);
+    showToast('warn', '⚠️', 'No slot available');
+  }
+}
+
+function releaseVehicle() {
+  const occupied = slots.filter(s => s.status === 'occupied');
+  if (occupied.length === 0) return;
+  const s = occupied[Math.floor(Math.random()*occupied.length)];
+  const v = s.vehicle;
+  s.status = s.isBuffer ? 'buffer' : 'available';
+  s.vehicle = null;
+  addLog('exit', `<span>${s.id}</span> released — ${v} exited`);
+  showToast('warn', '🚗', `Slot ${s.id} now free`);
+  notifyObservers('AVAILABLE', s.id);
+  renderGrid();
+  updateStats();
+}
+
+function resetLot() {
+  initLot();
+  logEntries = [];
+  document.getElementById('log-entries').innerHTML = '';
+  addLog('system', `Lot reset — <span>${strategy.toUpperCase()}</span> strategy loaded`);
+  showToast('info', '↺', 'Parking lot reset');
+}
+
+function setStrategy(s) {
+  strategy = s;
+  document.getElementById('btn-circular').classList.toggle('active', s === 'circular');
+  document.getElementById('btn-buffer').classList.toggle('active', s === 'buffer');
+  document.getElementById('strat-circular-btn').classList.toggle('active', s === 'circular');
+  document.getElementById('strat-buffer-btn').classList.toggle('active', s === 'buffer');
+  document.getElementById('strat-label').textContent = s === 'circular' ? 'CIRCULAR ALLOCATION' : 'BUFFER ALLOCATION';
+  addLog('system', `Strategy switched to <span>${s.toUpperCase()}</span>`);
+  showToast('info', '⚙️', `Strategy: ${s}`);
+}
+
+function updateStats() {
+  const occ = slots.filter(s => s.status === 'occupied').length;
+  const avail = slots.filter(s => s.status === 'available').length;
+  const res = slots.filter(s => s.status === 'reserved').length;
+  const buf = slots.filter(s => s.isBuffer).length;
+  const pct = Math.round((occ / TOTAL_SLOTS) * 100);
+  document.getElementById('stat-available').textContent = avail;
+  document.getElementById('stat-occupied').textContent = occ;
+  document.getElementById('stat-reserved').textContent = res;
+  document.getElementById('stat-buffer').textContent = buf;
+  document.getElementById('stat-pct').textContent = pct + '%';
+  document.getElementById('occ-bar').style.width = pct + '%';
+}
+
+function notifyObservers(status, slotId) {
+  const observers = ['Dashboard', 'SMS Operator', 'Mobile App', 'Billing'];
+  const obs = observers[Math.floor(Math.random()*observers.length)];
+  setTimeout(() => {
+    addLog('notify', `Observer <span>${obs}</span> notified — slot ${slotId} → ${status}`);
+  }, 150);
+}
+
+function addLog(type, msg) {
+  const log = document.getElementById('log-entries');
+  const ts = new Date().toLocaleTimeString('en',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const entry = document.createElement('div');
+  entry.className = `log-entry ${type}`;
+  entry.innerHTML = `[${ts}] ${msg}`;
+  log.insertBefore(entry, log.firstChild);
+  // Keep max 20
+  while (log.children.length > 20) log.removeChild(log.lastChild);
+}
+
+// ===================== TOASTS =====================
+function showToast(type, icon, msg) {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `<span class="toast-icon">${icon}</span>${msg}`;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 4200);
+}
+
+// ===================== CODE TABS =====================
+function switchTab(id) {
+  document.querySelectorAll('.code-tab').forEach((t,i) => {
+    const ids = ['java-observer','java-strategy','golang','spring','sql'];
+    t.classList.toggle('active', ids[i] === id);
+  });
+  document.querySelectorAll('.code-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById(`pane-${id}`).classList.add('active');
+  const labels = {
+    'java-observer': '📄 ParkingLot.java — Observer Subject',
+    'java-strategy': '📄 AllocationStrategy.java — OCP Pattern',
+    'golang': '📄 notifier.go — Concurrent Dispatcher',
+    'spring': '📄 ParkingController.java — REST API',
+    'sql': '📄 V1__init_parking_schema.sql — Flyway'
+  };
+  document.getElementById('code-filename').textContent = labels[id];
+}
+
+function copyCode() {
+  const active = document.querySelector('.code-pane.active pre');
+  if (active) {
+    navigator.clipboard.writeText(active.innerText).then(() => showToast('success','📋','Code copied!'));
+  }
+}
+
+// ===================== SCROLL REVEAL =====================
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// ===================== INIT =====================
+initLot();
+</script>
+</body>
+</html>
