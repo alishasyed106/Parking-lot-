@@ -1,7 +1,7 @@
 # 🅿️ ParkOS — Parking Management System
 
 **Developed by: Alisha**  
-*Version 2.1.0 | Kolkata, India*
+*Version 2.1.0 | 
 
 ---
 
