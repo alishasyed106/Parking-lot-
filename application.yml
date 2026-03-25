@@ -1,0 +1,117 @@
+# ParkOS — Spring Boot Configuration
+# Developed by: Alisha
+# Stack: Java 21, Spring Boot 3.2, PostgreSQL 16, Redis 7, Kafka
+
+spring:
+  application:
+    name: parkos-api
+
+  # ── Database ──────────────────────────────────────────────
+  datasource:
+    url: jdbc:postgresql://localhost:5432/parkos_db
+    username: ${DB_USER:parkos}
+    password: ${DB_PASS:parkos_secure_pass}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate      # Use Flyway for migrations in production
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        default_schema: public
+        jdbc:
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
+
+  # ── Redis Cache ───────────────────────────────────────────
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASS:}
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 16
+          min-idle: 4
+
+  cache:
+    type: redis
+    redis:
+      time-to-live: 300000   # 5 minutes
+
+  # ── Kafka ─────────────────────────────────────────────────
+  kafka:
+    bootstrap-servers: ${KAFKA_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      retries: 3
+    consumer:
+      group-id: parkos-consumer-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+
+  # ── Security ──────────────────────────────────────────────
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${JWT_ISSUER:http://localhost:8080}
+
+# ── Server ────────────────────────────────────────────────────
+server:
+  port: ${PORT:8080}
+  compression:
+    enabled: true
+    mime-types: application/json,text/html,text/css,application/javascript
+  servlet:
+    context-path: /
+
+# ── Actuator ──────────────────────────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+
+# ── Logging ───────────────────────────────────────────────────
+logging:
+  level:
+    in.parkos: DEBUG
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+  pattern:
+    console: "%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# ── ParkOS Custom ──────────────────────────────────────────────
+parkos:
+  jwt:
+    secret: ${JWT_SECRET:your-256-bit-secret-change-in-production}
+    expiry-ms: 86400000   # 24 hours
+  facility:
+    name: "ParkOS Central Hub"
+    total-slots: 100
+    timezone: "Asia/Kolkata"
+  rates:
+    car: 60
+    bike: 30
+    truck: 120
+    ev: 50
+  billing:
+    minimum-minutes: 30
+    currency: INR

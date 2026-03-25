@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ParkOS — Parking Management System</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon"><i class="fa-solid fa-square-parking"></i></div>
+      <div class="brand-text">
+        <span class="brand-name">ParkOS</span>
+        <span class="brand-sub">v2.1.0</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" data-page="dashboard">
+        <i class="fa-solid fa-gauge-high"></i><span>Dashboard</span>
+      </a>
+      <a href="#" class="nav-item" data-page="slots">
+        <i class="fa-solid fa-border-all"></i><span>Slot Map</span>
+      </a>
+      <a href="#" class="nav-item" data-page="vehicles">
+        <i class="fa-solid fa-car"></i><span>Vehicles</span>
+      </a>
+      <a href="#" class="nav-item" data-page="users">
+        <i class="fa-solid fa-users"></i><span>Users</span>
+      </a>
+      <a href="#" class="nav-item" data-page="reports">
+        <i class="fa-solid fa-chart-column"></i><span>Reports</span>
+      </a>
+      <a href="#" class="nav-item" data-page="settings">
+        <i class="fa-solid fa-gear"></i><span>Settings</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar">A</div>
+        <div class="user-info">
+          <span class="user-name">Alisha</span>
+          <span class="user-role">Administrator</span>
+        </div>
+        <i class="fa-solid fa-chevron-up"></i>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+    <!-- Top bar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="menu-btn" id="menuBtn"><i class="fa-solid fa-bars"></i></button>
+        <div class="breadcrumb" id="breadcrumb">Dashboard</div>
+      </div>
+      <div class="topbar-right">
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" placeholder="Search plates, users..." id="globalSearch"/>
+        </div>
+        <div class="topbar-actions">
+          <button class="icon-btn" title="Notifications">
+            <i class="fa-solid fa-bell"></i>
+            <span class="badge">3</span>
+          </button>
+          <button class="icon-btn" title="Toggle Theme" id="themeToggle">
+            <i class="fa-solid fa-moon"></i>
+          </button>
+          <button class="btn-primary" id="quickEntryBtn">
+            <i class="fa-solid fa-plus"></i> Quick Entry
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Pages -->
+    <div class="page-container">
+
+      <!-- DASHBOARD PAGE -->
+      <section class="page active" id="page-dashboard">
+        <div class="page-header">
+          <h1>Live Overview <span class="live-dot"></span></h1>
+          <p>Real-time parking facility status — <span id="currentTime"></span></p>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card stat-available">
+            <div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div>
+            <div class="stat-body">
+              <div class="stat-value" id="statAvailable">42</div>
+              <div class="stat-label">Available Slots</div>
+            </div>
+            <div class="stat-trend up"><i class="fa-solid fa-arrow-trend-up"></i> 8%</div>
+          </div>
+          <div class="stat-card stat-occupied">
+            <div class="stat-icon"><i class="fa-solid fa-car-side"></i></div>
+            <div class="stat-body">
+              <div class="stat-value" id="statOccupied">58</div>
+              <div class="stat-label">Occupied Slots</div>
+            </div>
+            <div class="stat-trend down"><i class="fa-solid fa-arrow-trend-down"></i> 3%</div>
+          </div>
+          <div class="stat-card stat-revenue">
+            <div class="stat-icon"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+            <div class="stat-body">
+              <div class="stat-value" id="statRevenue">₹12,480</div>
+              <div class="stat-label">Today's Revenue</div>
+            </div>
+            <div class="stat-trend up"><i class="fa-solid fa-arrow-trend-up"></i> 12%</div>
+          </div>
+          <div class="stat-card stat-vehicles">
+            <div class="stat-icon"><i class="fa-solid fa-rotate"></i></div>
+            <div class="stat-body">
+              <div class="stat-value" id="statVehicles">134</div>
+              <div class="stat-label">Vehicles Today</div>
+            </div>
+            <div class="stat-trend up"><i class="fa-solid fa-arrow-trend-up"></i> 5%</div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <!-- Occupancy Chart -->
+          <div class="card chart-card">
+            <div class="card-header">
+              <h3>Occupancy Rate — Last 7 Days</h3>
+              <div class="card-actions">
+                <button class="chip active">Week</button>
+                <button class="chip">Month</button>
+              </div>
+            </div>
+            <div class="chart-area">
+              <canvas id="occupancyChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Zone Status -->
+          <div class="card zone-card">
+            <div class="card-header">
+              <h3>Zone Status</h3>
+              <span class="badge-info">4 Zones</span>
+            </div>
+            <div class="zones-list" id="zonesList"></div>
+          </div>
+
+          <!-- Recent Activity -->
+          <div class="card activity-card">
+            <div class="card-header">
+              <h3>Recent Activity</h3>
+              <a href="#" class="view-all">View All</a>
+            </div>
+            <div class="activity-list" id="activityList"></div>
+          </div>
+
+          <!-- Revenue Chart -->
+          <div class="card chart-card">
+            <div class="card-header">
+              <h3>Revenue — Hourly</h3>
+              <span class="badge-info">Today</span>
+            </div>
+            <div class="chart-area">
+              <canvas id="revenueChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLOT MAP PAGE -->
+      <section class="page" id="page-slots">
+        <div class="page-header">
+          <h1>Parking Slot Map</h1>
+          <p>Interactive real-time slot visualization</p>
+        </div>
+        <div class="slot-controls">
+          <div class="filter-group">
+            <button class="chip active" data-filter="all">All</button>
+            <button class="chip" data-filter="available">Available</button>
+            <button class="chip" data-filter="occupied">Occupied</button>
+            <button class="chip" data-filter="reserved">Reserved</button>
+          </div>
+          <div class="slot-legend">
+            <span class="legend-item"><span class="dot dot-available"></span>Available</span>
+            <span class="legend-item"><span class="dot dot-occupied"></span>Occupied</span>
+            <span class="legend-item"><span class="dot dot-reserved"></span>Reserved</span>
+            <span class="legend-item"><span class="dot dot-disabled"></span>Disabled</span>
+          </div>
+        </div>
+        <div class="slot-zones" id="slotZones"></div>
+      </section>
+
+      <!-- VEHICLES PAGE -->
+      <section class="page" id="page-vehicles">
+        <div class="page-header">
+          <h1>Vehicle Management</h1>
+          <p>Track all vehicle entries and exits</p>
+        </div>
+        <div class="table-toolbar">
+          <input type="text" class="search-input" placeholder="Search by plate number..." id="vehicleSearch"/>
+          <div class="toolbar-right">
+            <select class="select-input" id="vehicleStatusFilter">
+              <option value="">All Status</option>
+              <option value="parked">Parked</option>
+              <option value="exited">Exited</option>
+            </select>
+            <button class="btn-primary" id="entryBtn">
+              <i class="fa-solid fa-plus"></i> New Entry
+            </button>
+          </div>
+        </div>
+        <div class="card table-card">
+          <table class="data-table" id="vehicleTable">
+            <thead>
+              <tr>
+                <th>Plate No.</th>
+                <th>Owner</th>
+                <th>Vehicle Type</th>
+                <th>Slot</th>
+                <th>Entry Time</th>
+                <th>Duration</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="vehicleTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- USERS PAGE -->
+      <section class="page" id="page-users">
+        <div class="page-header">
+          <h1>User Management</h1>
+          <p>Manage drivers, staff, and administrators</p>
+        </div>
+        <div class="table-toolbar">
+          <input type="text" class="search-input" placeholder="Search users..." id="userSearch"/>
+          <div class="toolbar-right">
+            <select class="select-input" id="userRoleFilter">
+              <option value="">All Roles</option>
+              <option value="admin">Admin</option>
+              <option value="staff">Staff</option>
+              <option value="driver">Driver</option>
+            </select>
+            <button class="btn-primary" id="addUserBtn">
+              <i class="fa-solid fa-user-plus"></i> Add User
+            </button>
+          </div>
+        </div>
+        <div class="users-grid" id="usersGrid"></div>
+      </section>
+
+      <!-- REPORTS PAGE -->
+      <section class="page" id="page-reports">
+        <div class="page-header">
+          <h1>Reports & Analytics</h1>
+          <p>Comprehensive parking usage insights</p>
+        </div>
+        <div class="reports-grid">
+          <div class="card report-summary">
+            <div class="report-period">
+              <h3>Monthly Summary</h3>
+              <select class="select-input" id="reportMonth">
+                <option>March 2026</option>
+                <option>February 2026</option>
+                <option>January 2026</option>
+              </select>
+            </div>
+            <div class="report-stats">
+              <div class="r-stat"><span class="r-val">3,842</span><span class="r-lbl">Total Vehicles</span></div>
+              <div class="r-stat"><span class="r-val">₹2,14,560</span><span class="r-lbl">Revenue</span></div>
+              <div class="r-stat"><span class="r-val">78%</span><span class="r-lbl">Avg. Occupancy</span></div>
+              <div class="r-stat"><span class="r-val">2.4h</span><span class="r-lbl">Avg. Duration</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Vehicle Type Distribution</h3></div>
+            <div class="chart-area"><canvas id="vehicleTypeChart"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Peak Hours Analysis</h3></div>
+            <div class="chart-area"><canvas id="peakHoursChart"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Revenue Trend — 30 Days</h3></div>
+            <div class="chart-area"><canvas id="revenueTrendChart"></canvas></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <h3>Detailed Transaction Log</h3>
+            <button class="btn-outline"><i class="fa-solid fa-download"></i> Export CSV</button>
+          </div>
+          <table class="data-table" id="transactionTable">
+            <thead>
+              <tr><th>ID</th><th>Plate</th><th>Entry</th><th>Exit</th><th>Duration</th><th>Slot</th><th>Amount</th><th>Status</th></tr>
+            </thead>
+            <tbody id="transactionBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- SETTINGS PAGE -->
+      <section class="page" id="page-settings">
+        <div class="page-header">
+          <h1>System Settings</h1>
+          <p>Configure parking facility parameters</p>
+        </div>
+        <div class="settings-grid">
+          <div class="card settings-card">
+            <h3><i class="fa-solid fa-building"></i> Facility Configuration</h3>
+            <div class="form-group"><label>Facility Name</label><input type="text" class="form-input" value="ParkOS Central Hub"/></div>
+            <div class="form-group"><label>Total Slots</label><input type="number" class="form-input" value="100"/></div>
+            <div class="form-group"><label>Operating Hours</label>
+              <div class="time-range">
+                <input type="time" class="form-input" value="06:00"/>
+                <span>to</span>
+                <input type="time" class="form-input" value="23:00"/>
+              </div>
+            </div>
+            <div class="form-group"><label>Location</label><input type="text" class="form-input" value="Kolkata, West Bengal"/></div>
+            <button class="btn-primary">Save Changes</button>
+          </div>
+          <div class="card settings-card">
+            <h3><i class="fa-solid fa-indian-rupee-sign"></i> Pricing Configuration</h3>
+            <div class="form-group"><label>Car (per hour)</label><input type="number" class="form-input" value="60"/></div>
+            <div class="form-group"><label>Bike (per hour)</label><input type="number" class="form-input" value="30"/></div>
+            <div class="form-group"><label>Truck (per hour)</label><input type="number" class="form-input" value="120"/></div>
+            <div class="form-group"><label>EV Surcharge</label><input type="number" class="form-input" value="0"/></div>
+            <button class="btn-primary">Update Pricing</button>
+          </div>
+          <div class="card settings-card">
+            <h3><i class="fa-solid fa-shield-halved"></i> Security & Access</h3>
+            <div class="toggle-group">
+              <label>Two-Factor Auth</label>
+              <div class="toggle active" data-toggle="tfa"></div>
+            </div>
+            <div class="toggle-group">
+              <label>Auto Logout (30 min)</label>
+              <div class="toggle active" data-toggle="auto-logout"></div>
+            </div>
+            <div class="toggle-group">
+              <label>Audit Logging</label>
+              <div class="toggle active" data-toggle="audit"></div>
+            </div>
+            <div class="toggle-group">
+              <label>Email Alerts</label>
+              <div class="toggle" data-toggle="email"></div>
+            </div>
+            <button class="btn-primary">Save Security Settings</button>
+          </div>
+          <div class="card settings-card">
+            <h3><i class="fa-solid fa-database"></i> Tech Stack Info</h3>
+            <div class="tech-list">
+              <div class="tech-item"><span class="tech-badge java">Java 21</span><span>Core Business Logic</span></div>
+              <div class="tech-item"><span class="tech-badge golang">Go 1.22</span><span>API Gateway & Services</span></div>
+              <div class="tech-item"><span class="tech-badge spring">Spring Boot 3.2</span><span>REST API Framework</span></div>
+              <div class="tech-item"><span class="tech-badge pg">PostgreSQL 16</span><span>Primary Database</span></div>
+              <div class="tech-item"><span class="tech-badge redis">Redis 7</span><span>Cache & Sessions</span></div>
+              <div class="tech-item"><span class="tech-badge kafka">Kafka</span><span>Event Streaming</span></div>
+            </div>
+            <div class="dev-credit">
+              <span>Developed by <strong>Alisha</strong></span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Vehicle Entry Modal -->
+  <div class="modal-overlay" id="entryModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-car"></i> Vehicle Entry</h3>
+        <button class="modal-close" id="closeEntryModal"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label>License Plate *</label>
+            <input type="text" class="form-input" id="entryPlate" placeholder="WB 01 AB 1234"/>
+          </div>
+          <div class="form-group">
+            <label>Vehicle Type *</label>
+            <select class="form-input" id="entryType">
+              <option value="car">Car</option>
+              <option value="bike">Bike / Scooter</option>
+              <option value="truck">Truck / Van</option>
+              <option value="ev">Electric Vehicle</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Owner Name</label>
+            <input type="text" class="form-input" id="entryOwner" placeholder="Full name"/>
+          </div>
+          <div class="form-group">
+            <label>Phone Number</label>
+            <input type="text" class="form-input" id="entryPhone" placeholder="+91 XXXXX XXXXX"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Preferred Zone</label>
+          <select class="form-input" id="entryZone">
+            <option value="auto">Auto Allocate (Recommended)</option>
+            <option value="A">Zone A — Ground Floor</option>
+            <option value="B">Zone B — Level 1</option>
+            <option value="C">Zone C — Level 2</option>
+            <option value="D">Zone D — Rooftop</option>
+          </select>
+        </div>
+        <div class="slot-preview" id="slotPreview">
+          <i class="fa-solid fa-circle-info"></i> Slot will be auto-assigned on entry
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" id="cancelEntry">Cancel</button>
+        <button class="btn-primary" id="confirmEntry"><i class="fa-solid fa-check"></i> Confirm Entry</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vehicle Exit Modal -->
+  <div class="modal-overlay" id="exitModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-right-from-bracket"></i> Vehicle Exit</h3>
+        <button class="modal-close" id="closeExitModal"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body" id="exitModalBody">
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" id="cancelExit">Cancel</button>
+        <button class="btn-primary" id="confirmExit"><i class="fa-solid fa-check"></i> Process Exit & Bill</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
